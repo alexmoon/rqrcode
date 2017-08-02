@@ -27,6 +27,29 @@ module RQRCode
         open_tag = %{<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events" width="#{dimension}" height="#{dimension}" shape-rendering="#{shape_rendering}">}
         close_tag = "</svg>"
 
+        result = svg_body(module_size, offset, dimension, color, options[:fill])
+
+        [xml_tag, open_tag, result, close_tag].flatten.join("\n")
+      end
+
+      def as_inline_svg(options={})
+        offset = options[:offset].to_i || 0
+        color = options[:color] || "000"
+        shape_rendering = options[:shape_rendering] || "crispEdges"
+        module_size = options[:module_size] || 11
+
+        # height and width dependent on offset and QR complexity
+        dimension = (self.module_count*module_size) + (2*offset)
+
+        open_tag = %{<svg xmlns="http://www.w3.org/2000/svg" width="#{dimension}" height="#{dimension}" viewBox="0 0 #{dimension} #{dimension}" preserveAspectRatio="xMidYMid meet" shape-rendering="#{shape_rendering}">}
+        close_tag = "</svg>"
+
+        [open_tag, svg_body(module_size, offset, dimension, color, options[:fill]), close_tag].flatten.join("\n")
+      end
+
+      private
+
+      def svg_body(module_size, offset, dimension, color, fill)
         result = []
         self.modules.each_index do |c|
           tmp = []
@@ -40,11 +63,11 @@ module RQRCode
           result << tmp.join
         end
 
-        if options[:fill]
-          result.unshift %{<rect width="#{dimension}" height="#{dimension}" x="0" y="0" style="fill:##{options[:fill]}"/>}
+        if fill
+          result.unshift %{<rect width="#{dimension}" height="#{dimension}" x="0" y="0" style="fill:##{fill}"/>}
         end
 
-        [xml_tag, open_tag, result, close_tag].flatten.join("\n")
+        result
       end
     end
   end
